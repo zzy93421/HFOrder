@@ -8,51 +8,85 @@ ver_type:1表示仅有实施文档的版本；2.获取应用一组高频库的�
 import os
 import pysvn
 class GPVer:
-    def __init__(self):
-        self.nextver=''
-        pass
-    def f(self,s):
-        ss= s.split('_')[1].replace('Build','')
-        return ss
-    def getVer(self,svn_path=r'D:\aeg2\Aegean2_update',ver_type=1):
-        svn=pysvn.Client()
-        svn.update(svn_path)
-        #获取新工单的版本号
-        #切换到决定工单下一版本的SVN目录
-        os.chdir(svn_path)
-        if ver_type in [1,2,3]:          
-            cmd=r'dir Aeg2DB_Build*.doc? /B'
-        elif ver_type==4:
-            #高频归集库
-            cmd=r'dir CLCTDB_Build* /B'
-        elif ver_type==5:
-            #二次验奖库
-            cmd=r'dir Aeg2DBCheck_Build* /B'
-            
-        list_file=os.popen(cmd).readlines()
-        list_file=list(map(self.f,list_file))        
-        list_temp=map(lambda x:int(x.split('.')[0]),list_file)
-        newVer='Build'+str(max(list_temp)).zfill(2)+'.'
-        list_temp=map(lambda x:int(x.split('.')[1]),list_file)
-        if ver_type==1:
-            #仅实施文档的版本号
-            newVer=newVer+str(max(list_temp)+1)+'.0'
-        elif ver_type==2:
-            #应用于一组高频库的版本号
-            newVer=newVer+str(max(list_temp)+1)+'.30.1.0'
-        elif ver_type==3:
-            #应用于所有组高频库的版本号
-            newVer=newVer+str(max(list_temp)+1)+'.10.1.0'
-        elif ver_type==4:
-            newVer=newVer+str(max(list_temp)+1).zfill(3)+'.4.1.0'
-            pass
-        elif ver_type==5:
-            #高频二次验奖库
-            newVer=newVer+str(max(list_temp)+1).zfill(3)+'.1.0'
-            pass
-        self.nextver=newVer
-        return self.nextver
+    '''
+    用于获取高频SVN版本信息的类
+    '''
+    def __init__(self,svn_path,ver_type):
+        '''
+        初始化函数
+            ver_typ:用5位表示，第1位表示实施文档;第2位表示单组高频库；第3位表示多组高频库；
+            第4位表示高频归集库；第5位表示高频计奖验证库。每位用1表示需要版本，0表示不需要版本。
+        '''
+        self.gpver_input_dict={
+            'svn_path':svn_path,
+            'ver_typ':list(map(lambda x: int(x), ver_type)), #将ver_type的5位字符转换为整数后放到一个列表中
+            }
+        self.gpver_output_dict={
+             'doc_ver':'', #仅有实施文档时的版本            
+             'one_group_ver':'',#仅一组数据库程序包的版本
+              'all_group_ver':'', #所有组数据库程序包的版本
+             'clctgp_ver':'',#高频归集库的版本
+             'pvdb_ver':'',#计奖验证库的版本
+            }
+    def svn_update(self):
+        '''
+        更新SVN目录，保持本地目录与SVN服务器目录版本一致
+        '''
+        client=pysvn.Client()
+        client.update(self.gpver_input_dict['svn_path'])
+    def get_ver(self):
+        '''
+        获取SVN下一个新的版本号
+        '''
+        os.chdir(self.gpver_input_dict['svn_path'])
+        list_file=os.popen('dir Aeg2DB_*.doc? /B').readlines()
+        list_file=list(map(lambda x: x.split('_')[1].strip('Build'),list_file))
+        ver=[0,0]
+        for i in list_file:
+            li_i=list(map(lambda x: int(x),i.split('.')[0:2]))
+            if li_i>ver:
+                ver=li_i
+        ver[1]=ver[1]+1
+        #获取到两位的新的版本号
+        new_ver=str(ver[0])+'.'+str(ver[1])
+        
+        #获取文档版本号
+        if self.gpver_input_dict['ver_typ'][0]==1 :
+            if sum(self.gpver_input_dict['ver_typ'])==1:
+                 self.gpver_output_dict['doc_ver']='Build'+new_ver+'.0'
+            else:
+                self.gpver_output_dict['doc_ver']='Build'+new_ver
+        
+        #获取单组高频库的版本号
+        if self.gpver_input_dict['ver_typ'][1]==1:
+            self.gpver_output_dict['one_group_ver']='Build'+new_ver+'.30.1.0'
+        
+        #获取多组高频库的版本号
+        if self.gpver_input_dict['ver_typ'][2]==1:
+            if self.gpver_input_dict['ver_typ'][1]==1:
+                self.gpver_output_dict['all_group_ver']='Build'+new_ver+'.10.2.0'
+            else:
+                self.gpver_output_dict['all_group_ver']='Build'+new_ver+'.10.1.0'
+        
+        #获取高频计奖验证库的版本号
+        if self.gpver_input_dict['ver_typ'][4]==1:
+             list_file=os.popen('dir Aeg2DBCheck_* /B').readlines()
+             list_file=list(map(lambda x: x.split('_')[1][5:],list_file))
+             ver=[0,0,0,0]
+             for i in list_file:
+                 list_i=i.split('.')
+                 list_i=list(map(lambda x: int(x),list_i))
+                 if list_i>ver:
+                     ver=list_i
+             ver[1]=ver[1]+1
+             self.gpver_output_dict['pvdb_ver']='Build'+str(ver[0]).zfill(2)+'.'+str(ver[1]).zfill(3)+'.'+str(ver[2])+'.'+str(ver[3])
+        
 
-if __name__=='__main__':
-    gv=GPVer()
-    gv.getVer(svn_path=r'D:\高频归集\trunk\script\update',ver_type=4)
+if __name__ == '__main__':
+    gv = GPVer(svn_path=r'D:\aeg2\Aegean2_update', ver_type='11101')
+    gv.svn_update()
+    gv.get_ver()
+    for (k,v) in gv.gpver_output_dict.items():
+        print(k+':'+v)
+    #gv.get_ver(svn_path=r'D:\aeg2\Aegean2_update', ver_type=1)
+    print("The program is end.")
