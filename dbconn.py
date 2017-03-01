@@ -2,8 +2,10 @@
 Created on 2015年9月17日
 
 @author: zhang zhiyuan
+
 '''
 import sqlite3
+
 import cx_Oracle
 
 
@@ -44,3 +46,20 @@ class XGPDBConn():
             'password': ('helios' if not password else password),
             'tns': (r'//192.168.80.21/xgp1' if not tns else tns),
         }
+        self.xgpdbconn_output_dict = {
+            'conn': '',
+            'cur': '',
+        }
+
+    def dbconn(self):
+        self.xgpdbconn_output_dict['conn'] = cx_Oracle.connect(self.xgpdbconn_input_dict[
+                                                               'username'], self.xgpdbconn_input_dict['password'],
+                                                               self.xgpdbconn_input_dict['tns'])
+        self.xgpdbconn_output_dict[
+            'cur'] = self.xgpdbconn_output_dict['conn'].cursor()
+        return self.xgpdbconn_output_dict['conn'], self.xgpdbconn_output_dict['cur']
+
+if __name__ == '__main__':
+    xgpdb = XGPDBConn(r'//192.168.80.100/xgp1', 'helios', 'helios')
+    conn, cur = xgpdb.dbconn()
+    print(conn.version)

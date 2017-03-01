@@ -7,6 +7,7 @@ Created on 2017年2月28日
 # -*- coding: utf-8 -*-
 # import  xdrlib ,sys
 import xlrd
+from dbconn import XGPDBConn
 
 
 def open_excel(file='file.xls'):
@@ -57,12 +58,16 @@ def excel_table_byname(file='file.xls', colnameindex=0, by_name=u'Sheet1'):
 
 
 def main():
+    xgpdb = XGPDBConn(r'//192.168.80.100/xgp1', 'helios', 'helios')
+    conn, cur = xgpdb.dbconn()
     tables = excel_table_byindex(r'C:\temp\result.xls', 0, 1)
     for row in tables:
+        cur.execute('INSERT INTO wh_condition_config  VALUES  (:1,:2,:3,:4)', [
+            row['PROMOTION_CONDITION_ID'], row['CONDITION_CLASS'], row['CONDITION_TEXT'], row['DESC_TEXT']])
         # print(row)
-        print(int(row['PROMOTION_CONDITION_ID']))
-        print(row['CONDITION_TEXT'])
-        print(row['DESC_TEXT'])
+        conn.commit()
+    cur.close()
+    conn.close()
 
     '''
     tables = excel_table_byname()
