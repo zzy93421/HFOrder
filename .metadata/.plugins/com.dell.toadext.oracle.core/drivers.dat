@@ -1,0 +1,16 @@
+<com.dell.toadext.oracle.core.store.DriversList serialization="custom">
+  <unserializable-parents/>
+  <list>
+    <default>
+      <size>2</size>
+    </default>
+    <int>2</int>
+    <string>E:\app\oracle\product\12.1.0\dbhome_1\jdbc\lib\ojdbc7.jar</string>
+    <string>E:\app\oracle\product\12.1.0\dbhome_1\jdbc\lib\ojdbc6.jar</string>
+  </list>
+  <com.dell.toadext.oracle.core.store.DriversList>
+    <default>
+      <version>1</version>
+    </default>
+  </com.dell.toadext.oracle.core.store.DriversList>
+</com.dell.toadext.oracle.core.store.DriversList>
