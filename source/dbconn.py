@@ -52,6 +52,9 @@ class XGPDBConn():
         }
 
     def dbconn(self):
+        '''
+        建立到高频库的连接
+        '''
         self.xgpdbconn_output_dict['conn'] = cx_Oracle.connect(self.xgpdbconn_input_dict[
                                                                'username'], self.xgpdbconn_input_dict['password'],
                                                                self.xgpdbconn_input_dict['tns'])
@@ -59,7 +62,10 @@ class XGPDBConn():
             'cur'] = self.xgpdbconn_output_dict['conn'].cursor()
         return self.xgpdbconn_output_dict['conn'], self.xgpdbconn_output_dict['cur']
 
-if __name__ == '__main__':
-    xgpdb = XGPDBConn(r'//192.168.80.100/xgp1', 'helios', 'helios')
-    conn, cur = xgpdb.dbconn()
-    print(conn.version)
+    def dbdisconn(self):
+        '''
+        断开数据库连接
+        '''
+        self.xgpdbconn_output_dict['conn'].commit()
+        self.xgpdbconn_output_dict['cur'].close()
+        self.xgpdbconn_output_dict['conn'].close()
